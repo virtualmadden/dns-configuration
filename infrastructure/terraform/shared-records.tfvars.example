@@ -1,0 +1,19 @@
+# Static records for zones hosted in the shared services account.
+# Copy to shared-records.auto.tfvars and commit it so CI applies the records.
+# Every domain here must also be in shared-domains.auto.tfvars.
+
+domain_records = {
+  "example.com" = [
+    {
+      name    = "_dmarc"
+      type    = "TXT"
+      records = ["v=DMARC1; p=none"]
+    },
+    {
+      name    = "@"
+      type    = "MX"
+      ttl     = 3600
+      records = ["10 mail.example.com"]
+    },
+  ]
+}

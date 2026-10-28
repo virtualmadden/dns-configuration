@@ -9,16 +9,47 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  PORKBUN_API_KEY: ${{ secrets.PORKBUN_API_KEY }}
+  PORKBUN_SECRET_KEY: ${{ secrets.PORKBUN_SECRET_KEY }}
+
+defaults:
+  run:
+    working-directory: infrastructure/terraform
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v7.0.1
 
-      - uses: aws-actions/configure-aws-credentials@main
+      # github-deploy in shared-services-prod; trusts only this repo's main branch.
+      - uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
-          role-to-assume: arn:aws:iam::095713295894:role/deployment_role
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-west-2
 
-      - run: aws sts get-caller-identity
+      - uses: hashicorp/setup-terraform@v4.0.1
+        with:
+          terraform_version: 1.17.1
+          terraform_wrapper: false
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform format check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        run: terraform plan -no-color -input=false -out=tfplan
+
+      - name: Terraform apply
+        run: terraform apply -auto-approve -input=false tfplan
