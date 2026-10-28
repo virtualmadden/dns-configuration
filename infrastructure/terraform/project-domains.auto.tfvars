@@ -6,6 +6,17 @@
 #   aws route53 get-hosted-zone --id ZONE_ID --query 'DelegationSet.NameServers'
 
 project_domains = {
+  # virtualmadden-dev-prod (502869771296), zone Z0426664394IQEBVGX8ZP
+  "virtualmadden.dev" = {
+    project = "virtualmadden-dev"
+    nameservers = [
+      "ns-1018.awsdns-63.net",
+      "ns-1241.awsdns-27.org",
+      "ns-145.awsdns-18.com",
+      "ns-1851.awsdns-39.co.uk",
+    ]
+  }
+
   # "otherdomain.com" = {
   #   project = "my-app"
   #   nameservers = [
