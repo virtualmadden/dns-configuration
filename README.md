@@ -24,7 +24,12 @@ flowchart LR
   ProjectFile --> Porkbun
 ```
 
-Projects own their records, including alias records to their ALBs and CloudFront distributions. Shared services zones only hold static records (TXT, MX, CNAME, and so on).
+Prefer shared services for every registered domain: its zone is never recreated, so Porkbun's nameservers never change and project accounts can come and go. Projects then go live by PR here:
+
+- **A project serving the apex** (or `www`) gets records in the shared zone: alias records to its CloudFront distribution or ALB, and its ACM certificate's validation CNAMEs. Aliases work across accounts. See `virtualmadden.dev` in [`shared-records.auto.tfvars`](infrastructure/terraform/shared-records.auto.tfvars).
+- **A project serving a subdomain** creates that subdomain's zone in its own account and gets NS records for it in the shared zone.
+
+`project_domains` is for a project that must own the whole zone itself.
 
 The account, its Terraform state bucket (`tfstate-908209634721-us-west-2`), and the `github-deploy` role CI assumes all come from [aws-organization](https://github.com/virtualmadden/aws-organization).
 
@@ -32,7 +37,7 @@ The account, its Terraform state bucket (`tfstate-908209634721-us-west-2`), and 
 
 1. Add the domain to `shared_domains` in [`shared-domains.auto.tfvars`](infrastructure/terraform/shared-domains.auto.tfvars).
 2. The zone publishes records refusing all mail (null MX, `v=spf1 -all`, DMARC `p=reject`), so nobody can send mail that passes as the domain. If it should handle mail, add it to `mail_domains` and give it its own MX and SPF records.
-3. For static records, copy [`shared-records.tfvars.example`](infrastructure/terraform/shared-records.tfvars.example) to `shared-records.auto.tfvars`, edit it, and commit it.
+3. Add its records to [`shared-records.auto.tfvars`](infrastructure/terraform/shared-records.auto.tfvars) (format: [`shared-records.tfvars.example`](infrastructure/terraform/shared-records.tfvars.example)). A record sets either `records` or `alias`.
 4. Enable **API Access** for the domain at Porkbun.
 5. Merge. The deploy workflow creates the zone and its records, then sets the domain's Porkbun nameservers.
 

@@ -16,9 +16,19 @@ variable "domain_records" {
     name    = string
     type    = string
     ttl     = optional(number, 300)
-    records = list(string)
+    records = optional(list(string))
+    # Alias to an AWS resource (CloudFront, ALB, ...) in any account, in place of records.
+    alias = optional(object({
+      name    = string
+      zone_id = string
+    }))
   })))
   default = {}
+
+  validation {
+    condition     = alltrue([for rec in flatten(values(var.domain_records)) : (rec.records == null) != (rec.alias == null)])
+    error_message = "Each record sets exactly one of records or alias."
+  }
 }
 
 variable "project_domains" {

@@ -23,3 +23,10 @@ resource "porkbun_domain_nameservers" "project" {
     }
   }
 }
+
+# virtualmadden.dev moved from its project account's zone to a shared zone; update its
+# Porkbun nameservers in place rather than resetting and re-setting them.
+moved {
+  from = porkbun_domain_nameservers.project["virtualmadden.dev"]
+  to   = module.zone["virtualmadden.dev"].porkbun_domain_nameservers.this
+}
