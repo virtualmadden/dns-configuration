@@ -2,9 +2,12 @@ module "zone" {
   source   = "./modules/zone"
   for_each = local.shared_domains
 
-  domain  = each.key
-  records = lookup(var.domain_records, each.key, [])
-  tags    = var.tags
+  domain = each.key
+  records = concat(
+    lookup(var.domain_records, each.key, []),
+    contains(local.mail_domains, each.key) ? [] : local.no_mail_records,
+  )
+  tags = var.tags
 }
 
 resource "porkbun_domain_nameservers" "project" {

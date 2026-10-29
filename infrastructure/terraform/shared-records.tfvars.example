@@ -1,6 +1,10 @@
 # Static records for zones hosted in the shared services account.
 # Copy to shared-records.auto.tfvars and commit it so CI applies the records.
 # Every domain here must also be in shared-domains.auto.tfvars.
+# A domain with MX or SPF records must also be in mail_domains, or its records clash
+# with the no-mail records published for it.
+
+mail_domains = ["example.com"]
 
 domain_records = {
   "example.com" = [

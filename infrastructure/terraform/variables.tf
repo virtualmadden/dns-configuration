@@ -4,6 +4,12 @@ variable "shared_domains" {
   default     = []
 }
 
+variable "mail_domains" {
+  description = "Shared domains that send or receive mail. Every other shared domain publishes records refusing all mail, so it can't be spoofed."
+  type        = list(string)
+  default     = []
+}
+
 variable "domain_records" {
   description = "Static records for shared services zones, keyed by domain."
   type = map(list(object({
