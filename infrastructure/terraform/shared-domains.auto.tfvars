@@ -7,6 +7,7 @@ shared_domains = [
   "jonmadden.dev",
   "mypassport.coffee",
   "virtualmadden.com",
+  "virtualmadden.dev",
   "virtualmadden.io",
   "vrtlmdn.io",
 ]

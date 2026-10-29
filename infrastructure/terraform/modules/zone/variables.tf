@@ -9,7 +9,11 @@ variable "records" {
     name    = string
     type    = string
     ttl     = optional(number, 300)
-    records = list(string)
+    records = optional(list(string))
+    alias = optional(object({
+      name    = string
+      zone_id = string
+    }))
   }))
   default = []
 }
