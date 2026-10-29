@@ -1,0 +1,21 @@
+# Weekly, one grouped PR per ecosystem. Dependabot PRs get no OIDC token or Porkbun
+# keys, so they run fmt and validate but skip the plan.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: terraform
+    directories:
+      - /infrastructure/terraform
+      - /infrastructure/terraform/modules/zone
+    schedule:
+      interval: weekly
+    groups:
+      terraform:
+        patterns: ["*"]

@@ -81,13 +81,15 @@ Repository secrets:
 
 | Name | Description |
 |------|-------------|
-| `AWS_ROLE_ARN` | `arn:aws:iam::908209634721:role/github-deploy` (aws-organization's `github_deploy_role_arn` output for `shared-services-prod`) |
 | `PORKBUN_API_KEY` | Porkbun API key (`pk1_...`) |
 | `PORKBUN_SECRET_KEY` | Porkbun secret key (`sk1_...`) |
 
 ## GitHub Actions
 
-- **Push to `main`**: `terraform plan` then `terraform apply`. The `github-deploy` role trusts only this repo's `main` branch.
+- **Pull request**: fmt and validate, then `terraform plan -lock=false` with the read-only `github-plan` role, shown in the run summary. Forked and Dependabot PRs get no AWS token or Porkbun keys, so they only fmt and validate.
+- **Push to `main`**: `terraform plan` then `terraform apply` with `github-deploy`, which trusts only this repo's `main` branch.
+
+Both roles come from aws-organization's account baseline for `shared-services-prod`.
 
 ## Local usage
 
