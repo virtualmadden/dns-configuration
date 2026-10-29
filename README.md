@@ -31,9 +31,10 @@ The account, its Terraform state bucket (`tfstate-908209634721-us-west-2`), and 
 ## Adding a shared services domain
 
 1. Add the domain to `shared_domains` in [`shared-domains.auto.tfvars`](infrastructure/terraform/shared-domains.auto.tfvars).
-2. For static records, copy [`shared-records.tfvars.example`](infrastructure/terraform/shared-records.tfvars.example) to `shared-records.auto.tfvars`, edit it, and commit it.
-3. Enable **API Access** for the domain at Porkbun.
-4. Merge. The deploy workflow creates the zone and sets the domain's Porkbun nameservers.
+2. The zone publishes records refusing all mail (null MX, `v=spf1 -all`, DMARC `p=reject`), so nobody can send mail that passes as the domain. If it should handle mail, add it to `mail_domains` and give it its own MX and SPF records.
+3. For static records, copy [`shared-records.tfvars.example`](infrastructure/terraform/shared-records.tfvars.example) to `shared-records.auto.tfvars`, edit it, and commit it.
+4. Enable **API Access** for the domain at Porkbun.
+5. Merge. The deploy workflow creates the zone and its records, then sets the domain's Porkbun nameservers.
 
 ## Adding a project domain
 
