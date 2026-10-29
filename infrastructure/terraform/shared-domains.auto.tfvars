@@ -3,5 +3,10 @@
 # A domain belongs here or in project-domains.auto.tfvars, never both.
 
 shared_domains = [
-  # "example.com",
+  "jonmadden.com",
+  "jonmadden.dev",
+  "mypassport.coffee",
+  "virtualmadden.com",
+  "virtualmadden.io",
+  "vrtlmdn.io",
 ]
