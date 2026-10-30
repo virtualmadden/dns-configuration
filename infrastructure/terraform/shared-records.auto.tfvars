@@ -1,6 +1,9 @@
 # Static records for zones hosted in the shared services account, keyed by domain.
 # Every domain here must also be in shared-domains.auto.tfvars.
 
+# Domains here publish their own mail records instead of the no-mail defaults.
+mail_domains = ["virtualmadden.dev"]
+
 domain_records = {
   # virtualmadden-dev-prod (502869771296). Values come from that project's Terraform:
   # the CloudFront distribution's domain and the ACM certificate's validation records.
@@ -19,5 +22,10 @@ domain_records = {
       type    = "CNAME"
       records = ["_8f115760a76baad8213b5f21a0dfa4ba.wzccmgtwzk.acm-validations.aws."]
     },
+    # Porkbun email forwarding, receive only: replies come from the destination mailbox, so
+    # nothing else may send as the domain, and DMARC still rejects anything that tries.
+    { name = "@", type = "MX", ttl = 3600, records = ["10 fwd1.porkbun.com.", "20 fwd2.porkbun.com."] },
+    { name = "@", type = "TXT", ttl = 3600, records = ["v=spf1 include:_spf.porkbun.com -all"] },
+    { name = "_dmarc", type = "TXT", ttl = 3600, records = ["v=DMARC1; p=reject;"] },
   ]
 }
