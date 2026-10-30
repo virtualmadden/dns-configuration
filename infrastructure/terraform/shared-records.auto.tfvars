@@ -4,6 +4,10 @@
 # Domains here publish their own mail records instead of the no-mail defaults.
 mail_domains = ["virtualmadden.dev"]
 
+# Addresses that may send through SES (mail.tf). Receiving is separate: Porkbun forwards
+# virtualmadden.dev's mail.
+sending_addresses = ["hello@virtualmadden.dev"]
+
 domain_records = {
   # virtualmadden-dev-prod (502869771296). Values come from that project's Terraform:
   # the CloudFront distribution's domain and the ACM certificate's validation records.

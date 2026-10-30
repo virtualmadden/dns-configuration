@@ -18,3 +18,13 @@ output "project_domains" {
     }
   }
 }
+
+output "ses_smtp" {
+  description = "Settings for sending through SES from a mail client. Create the password with scripts/ses-smtp-credentials.sh."
+  value = length(local.sending_addresses) == 0 ? null : {
+    host      = "email-smtp.${data.aws_region.current.region}.amazonaws.com"
+    port      = 587
+    iam_user  = aws_iam_user.ses_smtp[0].name
+    addresses = local.sending_addresses
+  }
+}

@@ -57,6 +57,26 @@ If a project recreates its zone, Route53 assigns new nameservers, so the entry h
 
 A domain can't be in both `shared_domains` and `project_domains`; plan fails if it is.
 
+## Mail
+
+Receiving and sending are set up separately.
+
+- **Receiving.** A domain in `mail_domains` publishes its own MX and SPF records instead of the no-mail defaults. `virtualmadden.dev` uses Porkbun email forwarding: its MX points at Porkbun, and the forwards (`hello@`, `postmaster@`, `abuse@`) are configured in Porkbun's dashboard.
+- **Sending.** Addresses in `sending_addresses` can send through SES ([`mail.tf`](infrastructure/terraform/mail.tf)). Each sending domain gets an SES identity with 2048-bit DKIM, and a `mail.<domain>` MAIL FROM subdomain with its own MX and SPF, so mail passes SPF and DKIM aligned with the domain and its DMARC policy stays at `p=reject`. The `ses-smtp` IAM user can only call `ses:SendRawEmail` as those addresses.
+
+To send from a mail client such as Gmail's **Send mail as**:
+
+1. Request SES production access once per account; until then SES only sends to verified addresses. Do this in the SES console under **Account dashboard**, or with `aws sesv2 put-account-details`.
+2. Create SMTP credentials. The password goes to the clipboard and never reaches Terraform state:
+
+   ```bash
+   AWS_PROFILE=shared-services-prod scripts/ses-smtp-credentials.sh
+   ```
+
+3. In Gmail, go to **Settings → Accounts → Send mail as → Add another email address**, enter the address, and use the server, port and username the script printed, with TLS.
+
+Mail that bounces or gets a complaint is reported back to the sending address. To rotate the credentials, run the script again, update the client, then delete the old access key.
+
 ## AWS cost
 
 | Resource | Typical cost |
@@ -65,6 +85,7 @@ A domain can't be in both `shared_domains` and `project_domains`; plan fails if 
 | Route53 hosted zone (project) | $0.50/month, billed to the project account |
 | Route53 DNS queries | ~$0 for low traffic ($0.40 per million) |
 | S3 state file + lock file | **~$0** |
+| SES sending | ~$0 at personal volume ($0.10 per 1,000 messages) |
 
 Project domains cost shared services nothing; only the zones in `shared_domains` do.
 
