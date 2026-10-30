@@ -52,3 +52,14 @@ variable "tags" {
     ManagedBy = "dns-configuration"
   }
 }
+
+variable "sending_addresses" {
+  description = "Addresses that may send mail through SES, such as hello@example.com. Each address's domain must be a shared domain."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for a in var.sending_addresses : can(regex("^[^@\\s]+@[^@\\s]+$", a))])
+    error_message = "Each sending address must look like name@domain."
+  }
+}
