@@ -61,7 +61,7 @@ A domain can't be in both `shared_domains` and `project_domains`; plan fails if 
 
 Receiving and sending are set up separately.
 
-- **Receiving.** A domain in `mail_domains` publishes its own MX and SPF records instead of the no-mail defaults. `virtualmadden.dev` uses Porkbun email forwarding: its MX points at Porkbun, and the forwards (`hello@`, `postmaster@`, `abuse@`) are configured in Porkbun's dashboard.
+- **Receiving.** A domain in `mail_domains` publishes its own MX and SPF records instead of the no-mail defaults. `virtualmadden.dev` uses Porkbun email forwarding: its MX points at Porkbun, and each address in `forwarding_addresses` is forwarded to the mailbox in the `EMAIL_FORWARD_TO` repository secret (`TF_VAR_email_forward_to` locally). The mailbox is kept out of the repo because it is private. Changing it replaces every forward.
 - **Sending.** Addresses in `sending_addresses` can send through SES ([`mail.tf`](infrastructure/terraform/mail.tf)). Each sending domain gets an SES identity with 2048-bit DKIM, and a `mail.<domain>` MAIL FROM subdomain with its own MX and SPF, so mail passes SPF and DKIM aligned with the domain and its DMARC policy stays at `p=reject`. The `ses-smtp` IAM user can only call `ses:SendRawEmail` as those addresses.
 
 To send from a mail client such as Gmail's **Send mail as**:
@@ -104,6 +104,7 @@ Repository secrets:
 |------|-------------|
 | `PORKBUN_API_KEY` | Porkbun API key (`pk1_...`) |
 | `PORKBUN_SECRET_KEY` | Porkbun secret key (`sk1_...`) |
+| `EMAIL_FORWARD_TO` | Mailbox that `forwarding_addresses` deliver to |
 
 ## GitHub Actions
 
@@ -121,6 +122,7 @@ aws sso login
 export AWS_PROFILE=shared-services-prod
 export PORKBUN_API_KEY="pk1_..."
 export PORKBUN_SECRET_KEY="sk1_..."
+export TF_VAR_email_forward_to="..."
 
 cd infrastructure/terraform
 terraform init

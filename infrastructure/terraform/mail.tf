@@ -1,10 +1,12 @@
-# Outgoing mail through SES, for the addresses in sending_addresses. Incoming mail is handled
-# separately, by whatever the domain's MX records point at (see mail_domains).
+# Incoming mail through Porkbun forwarding, for the addresses in forwarding_addresses, and
+# outgoing mail through SES, for the addresses in sending_addresses.
 #
 # Mail is signed with the domain's DKIM key and sent from a custom MAIL FROM subdomain, so it
 # passes SPF and DKIM aligned with the domain and the domain's DMARC policy can stay at reject.
 
 locals {
+  forwarding_addresses = toset([for a in var.forwarding_addresses : lower(trimspace(a))])
+
   sending_addresses = toset([for a in var.sending_addresses : lower(trimspace(a))])
   sending_domains   = toset([for a in local.sending_addresses : split("@", a)[1]])
 
@@ -13,6 +15,29 @@ locals {
     for pair in setproduct(local.sending_domains, range(3)) : "${pair[0]}/${pair[1]}" => {
       domain = pair[0]
       index  = pair[1]
+    }
+  }
+}
+
+# Porkbun also writes forwarding MX and SPF records into its own DNS for the domain, which
+# is unused because the domain is delegated to Route53. The records that matter are in
+# domain_records.
+resource "porkbun_email_forward" "this" {
+  for_each = local.forwarding_addresses
+
+  domain     = split("@", each.key)[1]
+  address    = split("@", each.key)[0]
+  forward_to = var.email_forward_to
+
+  lifecycle {
+    precondition {
+      condition     = contains(local.mail_domains, split("@", each.key)[1])
+      error_message = "${each.key} receives mail, so its domain must be in mail_domains or its MX refuses all mail."
+    }
+
+    precondition {
+      condition     = var.email_forward_to != null
+      error_message = "Set email_forward_to (TF_VAR_email_forward_to) to forward mail."
     }
   }
 }
