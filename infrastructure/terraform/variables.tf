@@ -80,4 +80,9 @@ variable "email_forward_to" {
   type        = string
   sensitive   = true
   default     = null
+
+  validation {
+    condition     = var.email_forward_to == null || can(regex("^[^@\\s]+@[^@\\s]+$", var.email_forward_to))
+    error_message = "email_forward_to must look like name@domain."
+  }
 }
