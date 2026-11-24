@@ -63,3 +63,21 @@ variable "sending_addresses" {
     error_message = "Each sending address must look like name@domain."
   }
 }
+
+variable "forwarding_addresses" {
+  description = "Addresses Porkbun forwards to email_forward_to, such as hello@example.com. Each address's domain must be in mail_domains."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for a in var.forwarding_addresses : can(regex("^[^@\\s]+@[^@\\s]+$", a))])
+    error_message = "Each forwarding address must look like name@domain."
+  }
+}
+
+variable "email_forward_to" {
+  description = "Mailbox that every forwarding address delivers to. It is private, so it comes from the EMAIL_FORWARD_TO secret (TF_VAR_email_forward_to) rather than tfvars."
+  type        = string
+  sensitive   = true
+  default     = null
+}

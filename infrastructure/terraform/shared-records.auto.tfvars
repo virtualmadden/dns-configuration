@@ -4,8 +4,15 @@
 # Domains here publish their own mail records instead of the no-mail defaults.
 mail_domains = ["virtualmadden.dev"]
 
-# Addresses that may send through SES (mail.tf). Receiving is separate: Porkbun forwards
-# virtualmadden.dev's mail.
+# Addresses Porkbun forwards to email_forward_to, which comes from the EMAIL_FORWARD_TO
+# secret (mail.tf).
+forwarding_addresses = [
+  "hello@virtualmadden.dev",
+  "postmaster@virtualmadden.dev",
+  "abuse@virtualmadden.dev",
+]
+
+# Addresses that may send through SES (mail.tf).
 sending_addresses = ["hello@virtualmadden.dev"]
 
 domain_records = {

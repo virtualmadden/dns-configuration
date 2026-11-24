@@ -23,6 +23,7 @@ jobs:
     env:
       PORKBUN_API_KEY: ${{ secrets.PORKBUN_API_KEY }}
       PORKBUN_SECRET_KEY: ${{ secrets.PORKBUN_SECRET_KEY }}
+      TF_VAR_email_forward_to: ${{ secrets.EMAIL_FORWARD_TO }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
