@@ -8,6 +8,8 @@ permissions:
 
 defaults:
   run:
+    # Explicit bash adds -o pipefail, so a failed plan piped through tee fails the step.
+    shell: bash
     working-directory: infrastructure/terraform
 
 jobs:
