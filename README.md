@@ -64,6 +64,14 @@ Receiving and sending are set up separately.
 - **Receiving.** A domain in `mail_domains` publishes its own MX and SPF records instead of the no-mail defaults. `virtualmadden.dev` uses Porkbun email forwarding: its MX points at Porkbun, and each address in `forwarding_addresses` is forwarded to the mailbox in the `EMAIL_FORWARD_TO` repository secret (`TF_VAR_email_forward_to` locally). The mailbox is kept out of the repo because it is private. Changing it replaces every forward.
 - **Sending.** Addresses in `sending_addresses` can send through SES ([`mail.tf`](infrastructure/terraform/mail.tf)). Each sending domain gets an SES identity with 2048-bit DKIM, and a `mail.<domain>` MAIL FROM subdomain with its own MX and SPF, so mail passes SPF and DKIM aligned with the domain and its DMARC policy stays at `p=reject`. The `ses-smtp` IAM user can only call `ses:SendRawEmail` as those addresses.
 
+To forward another address:
+
+1. Add it to `forwarding_addresses` in [`shared-records.auto.tfvars`](infrastructure/terraform/shared-records.auto.tfvars). Every address goes to the same mailbox, `EMAIL_FORWARD_TO`.
+2. If its domain doesn't receive mail yet, add the domain to `mail_domains` and give it Porkbun's forwarding records in `domain_records`: MX `10 fwd1.porkbun.com.` and `20 fwd2.porkbun.com.`, and SPF `v=spf1 include:_spf.porkbun.com -all`. Porkbun writes these into its own DNS when a forward is created, but nothing reads that DNS, because the domain is delegated to Route53.
+3. Merge.
+
+Removing an address from `forwarding_addresses` deletes its forward. Deleting a domain's last forward also removes Porkbun's records from its own DNS, which changes nothing here.
+
 To send from a mail client such as Gmail's **Send mail as**:
 
 1. Request SES production access once per account; until then SES only sends to verified addresses. Do this in the SES console under **Account dashboard**, or with `aws sesv2 put-account-details`.
@@ -106,10 +114,32 @@ Repository secrets:
 | `PORKBUN_SECRET_KEY` | Porkbun secret key (`sk1_...`) |
 | `EMAIL_FORWARD_TO` | Mailbox that `forwarding_addresses` deliver to |
 
+Set secrets from an interactive terminal with `gh secret set NAME`, which prompts for the value. Without a terminal (from a script or an agent's shell), it reads stdin and can silently save an empty value; pass `--body` there instead.
+
+### Rotating Porkbun API keys
+
+Porkbun shows a secret key only once, when the key is created, so rotating means creating a new key pair:
+
+1. Create the new key at Porkbun.
+2. Update `PORKBUN_API_KEY` and `PORKBUN_SECRET_KEY`.
+3. Re-run the latest pull request plan, or run one locally, and confirm it reaches Porkbun.
+4. Delete the old key at Porkbun.
+
+Until both secrets hold a live key, every plan fails on the Porkbun resources and nothing deploys.
+
 ## GitHub Actions
 
 - **Pull request**: fmt and validate, then `terraform plan -lock=false` with the read-only `github-plan` role, shown in the run summary. Forked and Dependabot PRs get no AWS token or Porkbun keys, so they only fmt and validate.
 - **Push to `main`**: `terraform plan` then `terraform apply` with `github-deploy`, which trusts only this repo's `main` branch.
+
+Merging a Dependabot PR applies it with no plan anyone has reviewed. Plan its branch locally first, read-only and without taking the state lock:
+
+```bash
+git switch --detach origin/<dependabot-branch>
+cd infrastructure/terraform
+terraform init
+terraform plan -lock=false
+```
 
 Both roles come from aws-organization's account baseline for `shared-services-prod`.
 
@@ -140,7 +170,7 @@ aws route53 list-resource-record-sets --hosted-zone-id ZONE_ID
 
 Nameservers from `dig` should match `terraform output shared_zones` or `terraform output project_domains`.
 
-## Import existing Route53 zones
+## Import existing resources
 
 If a zone already exists in `shared-services-prod`:
 
@@ -149,6 +179,14 @@ terraform import 'module.zone["example.com"].aws_route53_zone.this' ZONE_ID
 ```
 
 Import existing records individually, then run `terraform plan` to align Porkbun nameservers.
+
+Email forwards set up in Porkbun's dashboard are imported by address and mailbox:
+
+```bash
+terraform import 'porkbun_email_forward.this["hello@example.com"]' "example.com/hello/$TF_VAR_email_forward_to"
+```
+
+Run this locally rather than with `import` blocks. Terraform prints import IDs in plain text, and this repo's Actions logs are public, so an import in CI would publish the mailbox. Merge soon after importing: until the address is in `forwarding_addresses` on `main`, a deploy would delete the forward. The first plan after an import shows each forward changing in place, which only marks `forward_to` as sensitive in state.
 
 ## Destroy notes
 
