@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    # Docs-only pushes change no infrastructure. Run the workflow by hand to retry a deploy.
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
 
 permissions:
   id-token: write
