@@ -130,7 +130,7 @@ Until both secrets hold a live key, every plan fails on the Porkbun resources an
 ## GitHub Actions
 
 - **Pull request**: fmt and validate, then `terraform plan -lock=false` with the read-only `github-plan` role, shown in the run summary. Forked and Dependabot PRs get no AWS token or Porkbun keys, so they only fmt and validate.
-- **Push to `main`**: `terraform plan` then `terraform apply` with `github-deploy`, which trusts only this repo's `main` branch.
+- **Push to `main`**: `terraform plan` then `terraform apply` with `github-deploy`, which trusts only this repo's `main` branch. Pushes that only change Markdown skip it; to retry a failed deploy, run **Deploy** by hand (`gh workflow run deploy.yaml`).
 
 Merging a Dependabot PR applies it with no plan anyone has reviewed. Plan its branch locally first, read-only and without taking the state lock:
 
